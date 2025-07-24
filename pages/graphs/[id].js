@@ -62,6 +62,46 @@ export default function Home() {
         endY: null,
     });
 
+    // MiniMap相关事件处理和监听全部移到Home组件顶层
+    const miniMapRef = useRef();
+    const miniMapState = useRef({
+        margin: 20,
+        svgW: 200,
+        svgH: 130,
+        minX: 0,
+        minY: 0,
+        scale: 1,
+        viewW: 0,
+        viewH: 0,
+    });
+    const [miniMapDragging, setMiniMapDragging] = useState(false);
+    const [miniMapDragOffset, setMiniMapDragOffset] = useState({ x: 0, y: 0 });
+
+    // MiniMap事件处理函数
+    const handleMiniMapMouseDown = (e, viewX, viewY, viewW, viewH) => {
+      const rect = miniMapRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      // 判断是否点在红框内
+      if (
+        mouseX >= viewX && mouseX <= viewX + viewW &&
+        mouseY >= viewY && mouseY <= viewY + viewH
+      ) {
+        setMiniMapDragging(true);
+        setMiniMapDragOffset({ x: mouseX - viewX, y: mouseY - viewY });
+      } else {
+        // 直接跳转到点击位置
+        const { minX, minY, scale, margin } = miniMapState.current;
+        const newBoxX = (mouseX - margin) / scale + minX;
+        const newBoxY = (mouseY - margin) / scale + minY;
+        setBox(state => ({
+          ...state,
+          x: newBoxX,
+          y: newBoxY,
+        }));
+      }
+    };
+
     /**
      * It sets the offset to the mouse position relative to the box, and sets the mode to 'draging'
      */
@@ -382,6 +422,33 @@ export default function Home() {
         { preventDefault: true }
     );
 
+    // MiniMap事件处理函数
+    useEffect(() => {
+      if (!miniMapDragging) return;
+      const handleMiniMapMouseMove = e => {
+        const rect = miniMapRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const { minX, minY, scale, margin } = miniMapState.current;
+        const newBoxX = (mouseX - miniMapDragOffset.x - margin) / scale + minX;
+        const newBoxY = (mouseY - miniMapDragOffset.y - margin) / scale + minY;
+        setBox(state => ({
+          ...state,
+          x: newBoxX,
+          y: newBoxY,
+        }));
+      };
+      const handleMiniMapMouseUp = () => {
+        setMiniMapDragging(false);
+      };
+      window.addEventListener('mousemove', handleMiniMapMouseMove);
+      window.addEventListener('mouseup', handleMiniMapMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMiniMapMouseMove);
+        window.removeEventListener('mouseup', handleMiniMapMouseUp);
+      };
+    }, [miniMapDragging, miniMapDragOffset, setBox]);
+
     return (
         <div className="graph">
             <Head>
@@ -473,6 +540,102 @@ export default function Home() {
                 setTableSelectId={setTableSelectId}
                 tableSelectedId={tableSelectedId}
             />
+            {/* MiniMap 缩略图 */}
+            <div
+              style={{
+                position: 'absolute',
+                right: 24,
+                bottom: 24,
+                width: 200,
+                height: 150,
+                background: 'rgba(255,255,255,0.9)',
+                border: '1px solid #ccc',
+                borderRadius: 4,
+                zIndex: 10,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+            >
+              <div style={{
+                fontSize: 12,
+                color: '#666',
+                fontWeight: 500,
+                padding: '4px 0 2px 10px',
+                borderBottom: '1px solid #eee',
+                background: 'transparent',
+                letterSpacing: 1
+              }}>缩略图</div>
+              {/* MiniMap SVG */}
+              {(() => {
+                if (!tableList.length) return null;
+                const margin = 20;
+                let minX = Math.min(...tableList.map(t => t.x));
+                let minY = Math.min(...tableList.map(t => t.y));
+                let maxX = Math.max(...tableList.map(t => t.x + (t.w || 180)));
+                let maxY = Math.max(...tableList.map(t => t.y + (t.h || 48 + (t.fields?.length || 1) * 32)));
+                if (minX === maxX) maxX = minX + 1;
+                if (minY === maxY) maxY = minY + 1;
+                const svgW = 200, svgH = 130;
+                const scale = Math.min(
+                  (svgW - margin * 2) / (maxX - minX),
+                  (svgH - margin * 2) / (maxY - minY)
+                );
+                const viewX = (box.x - minX) * scale + margin;
+                const viewY = (box.y - minY) * scale + margin;
+                const viewW = box.w * scale;
+                const viewH = box.h * scale;
+                miniMapState.current = { margin, svgW, svgH, minX, minY, scale, viewW, viewH };
+                return (
+                  <svg
+                    ref={miniMapRef}
+                    width={svgW}
+                    height={svgH}
+                    style={{ display: 'block', marginTop: 0, cursor: miniMapDragging ? 'grabbing' : 'pointer' }}
+                    onMouseDown={e => handleMiniMapMouseDown(e, viewX, viewY, viewW, viewH)}
+                  >
+                    {tableList.map(t => (
+                      <rect
+                        key={t.id}
+                        x={(t.x - minX) * scale + margin}
+                        y={(t.y - minY) * scale + margin}
+                        width={(t.w || 180) * scale}
+                        height={((t.h || 48 + (t.fields?.length || 1) * 32)) * scale}
+                        fill="#90caf9"
+                        fillOpacity="0.5"
+                        stroke="#1976d2"
+                        strokeWidth={0.5}
+                        rx={2}
+                      />
+                    ))}
+                    {links.map(link => {
+                      const [a, b] = link.endpoints;
+                      const ta = tableDict[a.id], tb = tableDict[b.id];
+                      if (!ta || !tb) return null;
+                      return (
+                        <line
+                          key={link.id}
+                          x1={(ta.x + (ta.w || 180) / 2 - minX) * scale + margin}
+                          y1={(ta.y + (ta.h || 48) / 2 - minY) * scale + margin}
+                          x2={(tb.x + (tb.w || 180) / 2 - minX) * scale + margin}
+                          y2={(tb.y + (tb.h || 48) / 2 - minY) * scale + margin}
+                          stroke="#888"
+                          strokeWidth={0.5}
+                        />
+                      );
+                    })}
+                    <rect
+                      x={viewX}
+                      y={viewY}
+                      width={viewW}
+                      height={viewH}
+                      fill="none"
+                      stroke="#f44336"
+                      strokeWidth={1.5}
+                      style={{ cursor: 'grab' }}
+                    />
+                  </svg>
+                );
+              })()}
+            </div>
         </div>
     );
 }
