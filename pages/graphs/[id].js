@@ -79,37 +79,36 @@ export default function Home() {
 
     // MiniMap事件处理函数
     const handleMiniMapMouseDown = (e, viewX, viewY, viewW, viewH) => {
-      const rect = miniMapRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      // 判断是否点在红框内
-      if (
-        mouseX >= viewX && mouseX <= viewX + viewW &&
-        mouseY >= viewY && mouseY <= viewY + viewH
-      ) {
-        setMiniMapDragging(true);
-        setMiniMapDragOffset({ x: mouseX - viewX, y: mouseY - viewY });
-      } else {
-        // 直接跳转到点击位置
-        const { minX, minY, scale, margin } = miniMapState.current;
-        const newBoxX = (mouseX - margin) / scale + minX;
-        const newBoxY = (mouseY - margin) / scale + minY;
-        setBox(state => ({
-          ...state,
-          x: newBoxX,
-          y: newBoxY,
-        }));
-      }
+        const rect = miniMapRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        // 判断是否点在红框内
+        if (
+            mouseX >= viewX &&
+            mouseX <= viewX + viewW &&
+            mouseY >= viewY &&
+            mouseY <= viewY + viewH
+        ) {
+            setMiniMapDragging(true);
+            setMiniMapDragOffset({ x: mouseX - viewX, y: mouseY - viewY });
+        } else {
+            // 直接跳转到点击位置
+            const { minX, minY, scale, margin } = miniMapState.current;
+            const newBoxX = (mouseX - margin) / scale + minX;
+            const newBoxY = (mouseY - margin) / scale + minY;
+            setBox(state => ({
+                ...state,
+                x: newBoxX,
+                y: newBoxY,
+            }));
+        }
     };
 
     /**
      * It sets the offset to the mouse position relative to the box, and sets the mode to 'draging'
      */
     const mouseDownHandler = e => {
-        if (
-            (e.target.tagName === 'svg' || e.target.tagName === 'rect') &&
-            e.button !== 2
-        ) {
+        if ((e.target.tagName === 'svg' || e.target.tagName === 'rect') && e.button !== 2) {
             setOffset({
                 x: box.x + (e.clientX * box.w) / global.innerWidth,
                 y: box.y + (e.clientY * box.h) / global.innerHeight,
@@ -283,8 +282,8 @@ export default function Home() {
             if (newW > 4000 || newW < 600) return state;
 
             // 以鼠标为中心缩放
-            let newX = cursor.x - ((cursor.x - state.x) * scale);
-            let newY = cursor.y - ((cursor.y - state.y) * scale);
+            let newX = cursor.x - (cursor.x - state.x) * scale;
+            let newY = cursor.y - (cursor.y - state.y) * scale;
 
             return {
                 x: newX,
@@ -424,29 +423,29 @@ export default function Home() {
 
     // MiniMap事件处理函数
     useEffect(() => {
-      if (!miniMapDragging) return;
-      const handleMiniMapMouseMove = e => {
-        const rect = miniMapRef.current.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const { minX, minY, scale, margin } = miniMapState.current;
-        const newBoxX = (mouseX - miniMapDragOffset.x - margin) / scale + minX;
-        const newBoxY = (mouseY - miniMapDragOffset.y - margin) / scale + minY;
-        setBox(state => ({
-          ...state,
-          x: newBoxX,
-          y: newBoxY,
-        }));
-      };
-      const handleMiniMapMouseUp = () => {
-        setMiniMapDragging(false);
-      };
-      window.addEventListener('mousemove', handleMiniMapMouseMove);
-      window.addEventListener('mouseup', handleMiniMapMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMiniMapMouseMove);
-        window.removeEventListener('mouseup', handleMiniMapMouseUp);
-      };
+        if (!miniMapDragging) return;
+        const handleMiniMapMouseMove = e => {
+            const rect = miniMapRef.current.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const { minX, minY, scale, margin } = miniMapState.current;
+            const newBoxX = (mouseX - miniMapDragOffset.x - margin) / scale + minX;
+            const newBoxY = (mouseY - miniMapDragOffset.y - margin) / scale + minY;
+            setBox(state => ({
+                ...state,
+                x: newBoxX,
+                y: newBoxY,
+            }));
+        };
+        const handleMiniMapMouseUp = () => {
+            setMiniMapDragging(false);
+        };
+        window.addEventListener('mousemove', handleMiniMapMouseMove);
+        window.addEventListener('mouseup', handleMiniMapMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMiniMapMouseMove);
+            window.removeEventListener('mouseup', handleMiniMapMouseUp);
+        };
     }, [miniMapDragging, miniMapDragOffset, setBox]);
 
     return (
@@ -474,23 +473,12 @@ export default function Home() {
                 >
                     {/* 栅格背景定义 */}
                     <defs>
-                        <pattern
-                            id="dotgrid"
-                            width="28"
-                            height="28"
-                            patternUnits="userSpaceOnUse"
-                        >
+                        <pattern id="dotgrid" width="28" height="28" patternUnits="userSpaceOnUse">
                             <circle cx="1" cy="1" r="1" fill="#bdbdbd" />
                         </pattern>
                     </defs>
                     {/* 栅格背景填充 */}
-                    <rect
-                        x={box.x}
-                        y={box.y}
-                        width={box.w}
-                        height={box.h}
-                        fill="url(#dotgrid)"
-                    />
+                    <rect x={box.x} y={box.y} width={box.w} height={box.h} fill="url(#dotgrid)" />
                     {tableList.map(t => {
                         return (
                             <Table
@@ -542,114 +530,148 @@ export default function Home() {
             />
             {/* MiniMap 缩略图 */}
             <div
-              style={{
-                position: 'absolute',
-                right: 24,
-                bottom: 24,
-                width: 200,
-                height: 150,
-                background: 'rgba(255,255,255,0.9)',
-                border: '1px solid #ccc',
-                borderRadius: 4,
-                zIndex: 10,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-              }}
+                style={{
+                    position: 'absolute',
+                    right: 24,
+                    bottom: 24,
+                    width: 200,
+                    height: 150,
+                    background: 'rgba(255,255,255,0.9)',
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    zIndex: 10,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
             >
-              <div style={{
-                fontSize: 12,
-                color: '#666',
-                fontWeight: 500,
-                padding: '4px 0 2px 10px',
-                borderBottom: '1px solid #eee',
-                background: 'transparent',
-                letterSpacing: 1
-              }}>缩略图</div>
-              {/* MiniMap SVG */}
-              {(() => {
-                if (!tableList.length) return null;
-                const margin = 20;
-                let minX = Math.min(...tableList.map(t => t.x));
-                let minY = Math.min(...tableList.map(t => t.y));
-                let maxX = Math.max(...tableList.map(t => t.x + (t.w || 180)));
-                let maxY = Math.max(...tableList.map(t => t.y + (t.h || 48 + (t.fields?.length || 1) * 32)));
-                if (minX === maxX) maxX = minX + 1;
-                if (minY === maxY) maxY = minY + 1;
-                const svgW = 200, svgH = 130;
-                const scale = Math.min(
-                  (svgW - margin * 2) / (maxX - minX),
-                  (svgH - margin * 2) / (maxY - minY)
-                );
-                const viewX = (box.x - minX) * scale + margin;
-                const viewY = (box.y - minY) * scale + margin;
-                const viewW = box.w * scale;
-                const viewH = box.h * scale;
-                miniMapState.current = { margin, svgW, svgH, minX, minY, scale, viewW, viewH };
-                return (
-                  <svg
-                    ref={miniMapRef}
-                    width={svgW}
-                    height={svgH}
-                    style={{ display: 'block', marginTop: 0, cursor: miniMapDragging ? 'grabbing' : 'pointer' }}
-                    onMouseDown={e => handleMiniMapMouseDown(e, viewX, viewY, viewW, viewH)}
-                  >
-                    {tableList.map(t => {
-                      const x = (t.x - minX) * scale + margin;
-                      const y = (t.y - minY) * scale + margin;
-                      const w = (t.w || 180) * scale;
-                      const h = ((t.h || 48 + (t.fields?.length || 1) * 32)) * scale;
-                      const headerH = Math.max(14, 18 * scale); // 最小表头高度
-                      const fieldCount = t.fields?.length || 1;
-                      const fieldAreaH = h - headerH;
-                      return (
-                        <g key={t.id}>
-                          {/* 表头 */}
-                          <rect x={x} y={y} width={w} height={headerH} fill="#1976d2" rx={2} />
-                          {/* 字段区 */}
-                          <rect x={x} y={y + headerH} width={w} height={fieldAreaH} fill="#90caf9" rx={2} />
-                          {/* 字段分隔线 */}
-                          {Array.from({length: fieldCount - 1}).map((_, i) => (
-                            <line
-                              key={i}
-                              x1={x}
-                              x2={x + w}
-                              y1={y + headerH + fieldAreaH * (i + 1) / fieldCount}
-                              y2={y + headerH + fieldAreaH * (i + 1) / fieldCount}
-                              stroke="#fff"
-                              strokeWidth={0.5}
+                <div
+                    style={{
+                        fontSize: 12,
+                        color: '#666',
+                        fontWeight: 500,
+                        padding: '4px 0 2px 10px',
+                        borderBottom: '1px solid #eee',
+                        background: 'transparent',
+                        letterSpacing: 1,
+                    }}
+                >
+                    缩略图
+                </div>
+                {/* MiniMap SVG */}
+                {(() => {
+                    if (!tableList.length) return null;
+                    const margin = 20;
+                    let minX = Math.min(...tableList.map(t => t.x));
+                    let minY = Math.min(...tableList.map(t => t.y));
+                    let maxX = Math.max(...tableList.map(t => t.x + (t.w || 180)));
+                    let maxY = Math.max(
+                        ...tableList.map(t => t.y + (t.h || 48 + (t.fields?.length || 1) * 32))
+                    );
+                    if (minX === maxX) maxX = minX + 1;
+                    if (minY === maxY) maxY = minY + 1;
+                    const svgW = 200,
+                        svgH = 130;
+                    const scale = Math.min(
+                        (svgW - margin * 2) / (maxX - minX),
+                        (svgH - margin * 2) / (maxY - minY)
+                    );
+                    const viewX = (box.x - minX) * scale + margin;
+                    const viewY = (box.y - minY) * scale + margin;
+                    const viewW = box.w * scale;
+                    const viewH = box.h * scale;
+                    miniMapState.current = { margin, svgW, svgH, minX, minY, scale, viewW, viewH };
+                    return (
+                        <svg
+                            ref={miniMapRef}
+                            width={svgW}
+                            height={svgH}
+                            style={{
+                                display: 'block',
+                                marginTop: 0,
+                                cursor: miniMapDragging ? 'grabbing' : 'pointer',
+                            }}
+                            onMouseDown={e => handleMiniMapMouseDown(e, viewX, viewY, viewW, viewH)}
+                        >
+                            {tableList.map(t => {
+                                const x = (t.x - minX) * scale + margin;
+                                const y = (t.y - minY) * scale + margin;
+                                const w = (t.w || 180) * scale;
+                                const h = (t.h || 48 + (t.fields?.length || 1) * 32) * scale;
+                                const headerH = Math.max(14, 18 * scale); // 最小表头高度
+                                const fieldCount = t.fields?.length || 1;
+                                const fieldAreaH = h - headerH;
+                                return (
+                                    <g key={t.id}>
+                                        {/* 表头 */}
+                                        <rect
+                                            x={x}
+                                            y={y}
+                                            width={w}
+                                            height={headerH}
+                                            fill="#1976d2"
+                                            rx={2}
+                                        />
+                                        {/* 字段区 */}
+                                        <rect
+                                            x={x}
+                                            y={y + headerH}
+                                            width={w}
+                                            height={fieldAreaH}
+                                            fill="#90caf9"
+                                            rx={2}
+                                        />
+                                        {/* 字段分隔线 */}
+                                        {Array.from({ length: fieldCount - 1 }).map((_, i) => (
+                                            <line
+                                                key={i}
+                                                x1={x}
+                                                x2={x + w}
+                                                y1={
+                                                    y +
+                                                    headerH +
+                                                    (fieldAreaH * (i + 1)) / fieldCount
+                                                }
+                                                y2={
+                                                    y +
+                                                    headerH +
+                                                    (fieldAreaH * (i + 1)) / fieldCount
+                                                }
+                                                stroke="#fff"
+                                                strokeWidth={0.5}
+                                            />
+                                        ))}
+                                    </g>
+                                );
+                            })}
+                            {links.map(link => {
+                                const [a, b] = link.endpoints;
+                                const ta = tableDict[a.id],
+                                    tb = tableDict[b.id];
+                                if (!ta || !tb) return null;
+                                return (
+                                    <line
+                                        key={link.id}
+                                        x1={(ta.x + (ta.w || 180) / 2 - minX) * scale + margin}
+                                        y1={(ta.y + (ta.h || 48) / 2 - minY) * scale + margin}
+                                        x2={(tb.x + (tb.w || 180) / 2 - minX) * scale + margin}
+                                        y2={(tb.y + (tb.h || 48) / 2 - minY) * scale + margin}
+                                        stroke="#888"
+                                        strokeWidth={0.5}
+                                    />
+                                );
+                            })}
+                            <rect
+                                x={viewX}
+                                y={viewY}
+                                width={viewW}
+                                height={viewH}
+                                fill="none"
+                                stroke="#f44336"
+                                strokeWidth={1.5}
+                                style={{ cursor: 'grab' }}
                             />
-                          ))}
-                        </g>
-                      );
-                    })}
-                    {links.map(link => {
-                      const [a, b] = link.endpoints;
-                      const ta = tableDict[a.id], tb = tableDict[b.id];
-                      if (!ta || !tb) return null;
-                      return (
-                        <line
-                          key={link.id}
-                          x1={(ta.x + (ta.w || 180) / 2 - minX) * scale + margin}
-                          y1={(ta.y + (ta.h || 48) / 2 - minY) * scale + margin}
-                          x2={(tb.x + (tb.w || 180) / 2 - minX) * scale + margin}
-                          y2={(tb.y + (tb.h || 48) / 2 - minY) * scale + margin}
-                          stroke="#888"
-                          strokeWidth={0.5}
-                        />
-                      );
-                    })}
-                    <rect
-                      x={viewX}
-                      y={viewY}
-                      width={viewW}
-                      height={viewH}
-                      fill="none"
-                      stroke="#f44336"
-                      strokeWidth={1.5}
-                      style={{ cursor: 'grab' }}
-                    />
-                  </svg>
-                );
-              })()}
+                        </svg>
+                    );
+                })()}
             </div>
         </div>
     );
