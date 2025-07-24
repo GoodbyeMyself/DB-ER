@@ -66,7 +66,10 @@ export default function Home() {
      * It sets the offset to the mouse position relative to the box, and sets the mode to 'draging'
      */
     const mouseDownHandler = e => {
-        if (e.target.tagName === 'svg' && e.button !== 2) {
+        if (
+            (e.target.tagName === 'svg' || e.target.tagName === 'rect') &&
+            e.button !== 2
+        ) {
             setOffset({
                 x: box.x + (e.clientX * box.w) / global.innerWidth,
                 y: box.y + (e.clientY * box.h) / global.innerHeight,
@@ -402,6 +405,25 @@ export default function Home() {
                     // onWheel={wheelHandler}
                     ref={svg}
                 >
+                    {/* 栅格背景定义 */}
+                    <defs>
+                        <pattern
+                            id="dotgrid"
+                            width="28"
+                            height="28"
+                            patternUnits="userSpaceOnUse"
+                        >
+                            <circle cx="1" cy="1" r="1" fill="#bdbdbd" />
+                        </pattern>
+                    </defs>
+                    {/* 栅格背景填充 */}
+                    <rect
+                        x={box.x}
+                        y={box.y}
+                        width={box.w}
+                        height={box.h}
+                        fill="url(#dotgrid)"
+                    />
                     {tableList.map(table => {
                         return (
                             <Table
