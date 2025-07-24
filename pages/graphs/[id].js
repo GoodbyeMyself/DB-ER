@@ -491,11 +491,11 @@ export default function Home() {
                         height={box.h}
                         fill="url(#dotgrid)"
                     />
-                    {tableList.map(table => {
+                    {tableList.map(t => {
                         return (
                             <Table
-                                key={table.id}
-                                table={table}
+                                key={t.id}
+                                table={t}
                                 onTableMouseDown={tableMouseDownHandler}
                                 onGripMouseDown={gripMouseDownHandler}
                                 tableSelectedId={tableSelectedId}
@@ -592,20 +592,35 @@ export default function Home() {
                     style={{ display: 'block', marginTop: 0, cursor: miniMapDragging ? 'grabbing' : 'pointer' }}
                     onMouseDown={e => handleMiniMapMouseDown(e, viewX, viewY, viewW, viewH)}
                   >
-                    {tableList.map(t => (
-                      <rect
-                        key={t.id}
-                        x={(t.x - minX) * scale + margin}
-                        y={(t.y - minY) * scale + margin}
-                        width={(t.w || 180) * scale}
-                        height={((t.h || 48 + (t.fields?.length || 1) * 32)) * scale}
-                        fill="#90caf9"
-                        fillOpacity="0.5"
-                        stroke="#1976d2"
-                        strokeWidth={0.5}
-                        rx={2}
-                      />
-                    ))}
+                    {tableList.map(t => {
+                      const x = (t.x - minX) * scale + margin;
+                      const y = (t.y - minY) * scale + margin;
+                      const w = (t.w || 180) * scale;
+                      const h = ((t.h || 48 + (t.fields?.length || 1) * 32)) * scale;
+                      const headerH = Math.max(14, 18 * scale); // 最小表头高度
+                      const fieldCount = t.fields?.length || 1;
+                      const fieldAreaH = h - headerH;
+                      return (
+                        <g key={t.id}>
+                          {/* 表头 */}
+                          <rect x={x} y={y} width={w} height={headerH} fill="#1976d2" rx={2} />
+                          {/* 字段区 */}
+                          <rect x={x} y={y + headerH} width={w} height={fieldAreaH} fill="#90caf9" rx={2} />
+                          {/* 字段分隔线 */}
+                          {Array.from({length: fieldCount - 1}).map((_, i) => (
+                            <line
+                              key={i}
+                              x1={x}
+                              x2={x + w}
+                              y1={y + headerH + fieldAreaH * (i + 1) / fieldCount}
+                              y2={y + headerH + fieldAreaH * (i + 1) / fieldCount}
+                              stroke="#fff"
+                              strokeWidth={0.5}
+                            />
+                          ))}
+                        </g>
+                      );
+                    })}
                     {links.map(link => {
                       const [a, b] = link.endpoints;
                       const ta = tableDict[a.id], tb = tableDict[b.id];
